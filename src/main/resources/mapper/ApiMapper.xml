@@ -1,0 +1,239 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="api">
+
+	<!-- 뉴스사이트 수정 -->
+	<insert id="P_API_NEWS_SITE" parameterType="HashMap" >
+		/* P_API_NEWS_SITE */
+		MERGE INTO API_NEWS_SITE A
+			 USING DUAL
+			    ON (A.COMM_USER_ID = #{COMM_USER_ID} AND A.SITE_CODE = #{SITE_CODE})
+			  WHEN MATCHED THEN
+			  UPDATE SET A.USE_YN = #{USE_YN}
+			  		   , A.MID = #{MID}
+			  		   , A.MDT = SYSDATE
+			  		   , A.MIP = #{MIP}
+			  WHEN NOT MATCHED THEN
+			  INSERT( API_NEWS_SITE_ID
+			  		, COMM_USER_ID
+			  		, SITE_CODE
+			  		, USE_YN
+			  		, CID
+			  		, CDT
+			  		, CIP
+			  		, MID
+			  		, MDT
+			  		, MIP)
+			  VALUES( API_NEWS_SITE_S.NEXTVAL
+			  		, #{COMM_USER_ID}
+			  		, #{SITE_CODE}
+			  		, #{USE_YN}
+			  		, #{CID}
+			  		, SYSDATE
+			  		, #{CIP}
+			  		, #{MID}
+			  		, SYSDATE
+			  		, #{MIP})
+	</insert>
+	
+	<!-- 뉴스사이트 조회 -->
+	<select id="S_API_NEWS_SITE" resultType="HashMap" parameterType="HashMap" >
+		/* S_API_NEWS_SITE */
+		SELECT A.SITE_CODE				AS SITE_CODE
+			 , NVL(A.USE_YN, '0') 		AS USE_YN
+		  FROM API_NEWS_SITE A
+		 WHERE A.API_NEWS_SITE_ID = A.API_NEWS_SITE_ID
+		   AND NVL(A.USE_YN, '0') = '1'
+		   <if test="@org.apache.commons.lang3.StringUtils@isNotBlank(COMM_USER_ID)">
+		   AND A.COMM_USER_ID = #{COMM_USER_ID}
+		   </if>		   
+	</select>
+	
+	<!-- 뉴스 키워드 추가 -->
+	<insert id="I_API_NEWS_KEYWORD" parameterType="HashMap" >
+		/* I_API_NEWS_KEYWORD */
+		MERGE INTO API_NEWS_KEYWORD A
+			 USING DUAL
+			    ON (A.COMM_USER_ID = #{COMM_USER_ID} AND A.KEYWORD = #{KEYWORD})
+			  WHEN NOT MATCHED THEN
+			  INSERT( API_NEWS_KEYWORD_ID
+			  		, COMM_USER_ID
+			  		, KEYWORD
+			  		, CID
+			  		, CDT
+			  		, CIP
+			  		, MID
+			  		, MDT
+			  		, MIP)
+			  VALUES( API_NEWS_KEYWORD_S.NEXTVAL
+			  		, #{COMM_USER_ID}
+			  		, #{KEYWORD}
+			  		, #{CID}
+			  		, SYSDATE
+			  		, #{CIP}
+			  		, #{MID}
+			  		, SYSDATE
+			  		, #{MIP})
+	</insert>
+	<!-- 뉴스 키워드 삭제 -->
+	<delete id="D_API_NEWS_KEYWORD" parameterType="HashMap" >
+		/* D_API_NEWS_KEYWORD */
+		DELETE 
+		  FROM API_NEWS_KEYWORD A
+		 WHERE A.COMM_USER_ID = #{COMM_USER_ID}
+		   AND A.KEYWORD = #{KEYWORD}
+	</delete>
+	<!-- 뉴스 키워드 조회 -->
+	<select id="S_API_NEWS_KEYWORD" resultType="HashMap" parameterType="HashMap" >
+		/* S_API_NEWS_KEYWORD */
+		SELECT DISTINCT
+			   A.KEYWORD				AS KEYWORD
+		  FROM API_NEWS_KEYWORD A
+		 WHERE A.API_NEWS_KEYWORD_ID = A.API_NEWS_KEYWORD_ID
+		   <if test="@org.apache.commons.lang3.StringUtils@isNotBlank(COMM_USER_ID)">
+		   AND A.COMM_USER_ID = #{COMM_USER_ID}
+		   </if>	 
+	</select>
+	<!-- 마지막 뉴스 스크래핑 로그 조회 -->
+	<select id="S_API_NEWS_LOG" resultType="HashMap" parameterType="HashMap" >
+		/* S_API_NEWS_LOG */
+		SELECT A.SCRAP_SITE
+			 , A.KEYWORD
+			 , MIN(A.ORIGINAL_LINK) KEEP(DENSE_RANK FIRST ORDER BY CDT DESC)  	AS ORIGINAL_LINK
+			 , MIN(A.SITE_LINK) KEEP(DENSE_RANK FIRST ORDER BY CDT DESC)  		AS SITE_LINK
+		  FROM API_NEWS_LOG A
+		  <if test="@org.apache.commons.lang3.StringUtils@isNotBlank(COMM_USER_ID)">
+		   WHERE EXISTS (
+					   	SELECT Z.SITE_CODE
+					   		 , Y.KEYWORD
+					   	  FROM API_NEWS_SITE Z
+					   	  JOIN API_NEWS_KEYWORD Y ON (Z.COMM_USER_ID = Y.COMM_USER_ID)
+					   	 WHERE Z.COMM_USER_ID = #{COMM_USER_ID}
+					   	   AND Z.USE_YN = '1'
+					   	   AND Z.SITE_CODE = A.SCRAP_SITE
+					   	   AND Y.KEYWORD = A.KEYWORD
+					   )
+		   </if>
+		 GROUP BY A.SCRAP_SITE, A.KEYWORD
+	</select>
+	
+	<!-- 뉴스 데이터 이력 저장 -->	
+	<insert id="I_API_NEWS_LOG" parameterType="HashMap">
+		/* I_API_NEWS_LOG */
+		INSERT INTO API_NEWS_LOG( SCRAP_SITE
+								, KEYWORD
+								, ORIGINAL_LINK
+								, SITE_LINK
+								, CDT)
+	               		  VALUES( #{SCRAP_SITE}
+	               				, #{KEYWORD}    
+	               				, #{ORIGINAL_LINK}
+	               				, #{SITE_LINK}
+	               				, SYSDATE)
+	</insert>
+	
+	<!-- 뉴스 데이터 저장 -->	
+	<insert id="I_API_NEWS" parameterType="HashMap">
+		/* I_API_NEWS */
+		INSERT INTO API_NEWS( API_NEWS_ID
+							, SCRAP_SITE
+							, KEYWORD
+							, TITLE
+							, SITE_LINK
+							, ORIGINAL_LINK
+							, DESCRIPTION
+							, PUB_DATE
+							, CDT)
+               		   SELECT API_NEWS_S.NEXTVAL
+               				, #{SCRAP_SITE}
+               				, #{KEYWORD}               				
+               				, #{TITLE}
+               				, #{SITE_LINK}
+               				, #{ORIGINAL_LINK}
+               				, #{DESCRIPTION}
+               				, #{PUB_DATE}
+               				, SYSDATE
+               			 FROM DUAL
+               			WHERE NOT EXISTS (
+								SELECT Z.API_NEWS_ID
+								  FROM API_NEWS Z
+								 WHERE Z.SCRAP_SITE		= #{SCRAP_SITE}
+								   AND Z.ORIGINAL_LINK	= #{ORIGINAL_LINK}
+								   AND Z.SITE_LINK		= #{SITE_LINK}
+								   AND Z.KEYWORD		= #{KEYWORD}     
+							)
+	</insert>
+	
+	<!-- 뉴스 데이터 저장 -->	
+	<insert id="I_API_NEWS_MANY" parameterType="HashMap">
+		/* I_API_NEWS_MANY */
+		INSERT INTO API_NEWS( API_NEWS_ID
+							, SCRAP_SITE
+							, KEYWORD
+							, TITLE
+							, SITE_LINK
+							, ORIGINAL_LINK
+							, DESCRIPTION
+							, PUB_DATE
+							, CDT)
+					   SELECT API_NEWS_S.NEXTVAL
+						    , A.SCRAP_SITE
+             				, A.KEYWORD               				
+             				, A.TITLE
+             				, A.SITE_LINK
+             				, A.ORIGINAL_LINK
+             				, A.DESCRIPTION
+             				, A.PUB_DATE
+             				, SYSDATE
+					  FROM (
+					  <foreach collection="LIST" item="item" separator="UNION">
+							SELECT #{item.SCRAP_SITE}		AS SCRAP_SITE
+								 , #{item.KEYWORD}			AS KEYWORD
+								 , #{item.TITLE}			AS TITLE
+								 , #{item.SITE_LINK}		AS SITE_LINK
+								 , #{item.ORIGINAL_LINK}	AS ORIGINAL_LINK
+								 , #{item.DESCRIPTION}		AS DESCRIPTION
+								 , #{item.PUB_DATE}			AS PUB_DATE
+							  FROM DUAL
+						</foreach>
+					  ) A
+					WHERE NOT EXISTS (
+						SELECT Z.API_NEWS_ID
+						  FROM API_NEWS Z
+						 WHERE Z.SCRAP_SITE		= A.SCRAP_SITE
+						   AND Z.ORIGINAL_LINK	= A.ORIGINAL_LINK
+						   AND Z.SITE_LINK		= A.SITE_LINK
+						   AND Z.KEYWORD		= A.KEYWORD
+					)
+	</insert>
+	
+	<!-- 뉴스 스크래핑 데이터 조회 -->
+	<select id="S_API_NEWS" resultMap="ClobMap" parameterType="HashMap">
+		/* S_API_NEWS */
+		SELECT A.SCRAP_SITE
+			 , A.KEYWORD
+			 , A.TITLE
+			 , NVL(A.SITE_LINK, A.ORIGINAL_LINK)	AS SITE_LINK
+			 , A.DESCRIPTION
+			 , TO_CHAR(A.PUB_DATE, 'YYYY-MM-DD HH:MI:SS')	AS PUB_DATE
+		  FROM API_NEWS A
+		   WHERE EXISTS (
+					   	SELECT Z.SITE_CODE
+					   		 , Y.KEYWORD
+					   	  FROM API_NEWS_SITE Z
+					   	  JOIN API_NEWS_KEYWORD Y ON (Z.COMM_USER_ID = Y.COMM_USER_ID)
+					   	 WHERE Z.COMM_USER_ID = #{COMM_USER_ID}
+					   	   AND Z.USE_YN = '1'
+					   	   AND Z.SITE_CODE = A.SCRAP_SITE
+					   	   AND Y.KEYWORD = A.KEYWORD
+					   )
+		ORDER BY A.PUB_DATE DESC
+	</select>
+	
+	<!-- clob -->
+	<resultMap id="ClobMap" type="hashMap" >
+	    <result property="DESCRIPTION" column="DESCRIPTION" jdbcType="CLOB" javaType="java.lang.String"/>
+	</resultMap>
+</mapper>
