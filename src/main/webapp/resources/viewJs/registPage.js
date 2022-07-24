@@ -39,7 +39,7 @@ var regist = function(){
 			PWD : gf_securePw( $('#PWD').val() , $('#publicKey').val() )
 		}
 		, success: function(data){
-			debugger;
+			
 			if(data.result == 'success'){
 				location.replace('/');
 			}

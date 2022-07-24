@@ -26,8 +26,8 @@
 		<interceptor>
 			<mapping path="/*" />
 			<mapping path="/oauth/*" />
-			<exclude-mapping path="/ddi/favicon.ico"/>
-			<exclude-mapping path="/ddi/logout"/>
+			<exclude-mapping path="/favicon.ico"/>
+			<exclude-mapping path="/logout"/>
 			<beans:bean class="ddi.util.ComInterceptor" />
 		</interceptor>
 	</interceptors>
