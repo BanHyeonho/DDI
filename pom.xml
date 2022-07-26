@@ -62,6 +62,13 @@
 		    <version>3.12.0</version>
 		</dependency>
 		
+		<!-- tomcat 톰캣버전, 젠킨스 메이븐빌드시 필요-->
+		<dependency>
+			<groupId>org.apache.tomcat</groupId>
+			<artifactId>tomcat-catalina</artifactId>
+			<version>9.0.52</version>
+		</dependency>
+		
 		<!-- Logging -->
 		<dependency>
 		    <groupId>org.bgee.log4jdbc-log4j2</groupId>
