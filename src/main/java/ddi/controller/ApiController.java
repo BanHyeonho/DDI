@@ -1,5 +1,7 @@
 package ddi.controller;
 
+import java.util.Map;
+
 import javax.servlet.http.HttpServletRequest;
 
 import org.slf4j.Logger;
@@ -30,7 +32,7 @@ public class  ApiController{
 	 * 뉴스데이터 가져오기
 	 */
 	@RequestMapping(value = "/news", method = RequestMethod.POST)
-	public @ResponseBody Object news(HttpServletRequest request) throws Exception {
+	public @ResponseBody Map news(HttpServletRequest request) throws Exception {
 		logger.info("URL is {}.", "[" + request.getRequestURI() + "]");
 		api.news(request);
 		return null;

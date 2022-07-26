@@ -92,7 +92,7 @@ public class ComController {
 	 * 회원가입 처리
 	 */
 	@RequestMapping(value = "/registAction", method = RequestMethod.POST)
-	public @ResponseBody Object registAction(HttpServletRequest request) throws Exception {
+	public @ResponseBody Map registAction(HttpServletRequest request) throws Exception {
 		logger.info("URL is {}.", "[" + request.getRequestURI() + "]");
 		Map<String, String> resultMap = new HashMap();
 		
@@ -104,7 +104,7 @@ public class ComController {
 	 * 로그인처리
 	 */
 	@RequestMapping(value = "/loginAction", method = RequestMethod.POST)
-	public @ResponseBody Object loginAction(HttpServletRequest request) throws Exception {
+	public @ResponseBody Map loginAction(HttpServletRequest request) throws Exception {
 		logger.info("URL is {}.", "[" + request.getRequestURI() + "]");
 		Map<String, String> resultMap = new HashMap();
 		
@@ -140,7 +140,7 @@ public class ComController {
 	 * ajax
 	 */
 	@RequestMapping(value = "/ajax", method = RequestMethod.POST)
-	public @ResponseBody Object ajax(HttpServletRequest request) throws Exception {
+	public @ResponseBody Map ajax(HttpServletRequest request) throws Exception {
 		logger.info("URL is {}.", "[" + request.getRequestURI() + "]");
 		
 		return comService.ajax(request);
